@@ -1,12 +1,53 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
+import { openModal } from "../modal/modalSlice";
 import cartItems from "../../cartItems";
 
+const url = "https://course-api.com/react-useReducer-cart-project";
+
 const initialState = {
-  cartItems: cartItems,
+  // cartItems: cartItems,
+  cartItems: [],
   total: 0,
   amount: 4,
-  isloading: false,
+  isLoading: false,
+  error: null,
 };
+
+// export const getCartItems = createAsyncThunk("cart/getCartItems", () => {
+//   return axios
+//     .get(url)
+//     .then((res) => res.data)
+//     .catch((err) => console.log(err));
+// });
+
+// OR
+
+export const getCartItems = createAsyncThunk(
+  "cart/getCartItems",
+  async (name, thunkAPI) => {
+    // first parameter is argument sent from components if necessary while api call such as in params or for post,patch requests
+    try {
+      // console.log("passed data", name);
+      // console.log("whole thunk API", thunkAPI);
+      // console.log("thunk api getState()", thunkAPI.getState());
+      // can use it to access other reducers,states as well
+      // thunkAPI.dispatch(openModal());
+      const resp = await axios.get(url);
+
+      return resp.data;
+    } catch (error) {
+      console.log("error", error);
+      // return thunkAPI.rejectWithValue(error.message);
+      return thunkAPI.rejectWithValue(error.response.data);
+      // return thunkAPI.rejectWithValue("something went wrong");
+    }
+  }
+);
+
+const getCartItemsPending = ["cart/getCartItems/pending"];
+const getCartItemsFulfilled = ["cart/getCartItems/fulfilled"];
+const getCartItemsRejected = ["cart/getCartItems/rejected"];
 
 export const cartSlice = createSlice({
   name: "cart",
@@ -45,6 +86,71 @@ export const cartSlice = createSlice({
       state.amount = amount;
       state.total = total;
     },
+  },
+  // extraReducers: {
+  //   [getCartItems.pending]: (state) => {
+  //     state.isLoading = true;
+  //   },
+  //   [getCartItems.fulfilled]: (state, action) => {
+  //     // console.log(action);
+  //     state.isLoading = false;
+  //     state.cartItems = action.payload;
+  //     state.error = null;
+  //   },
+  //   [getCartItems.rejected]: (state, action) => {
+  //     console.log(action);
+  //     state.isLoading = false;
+  //     state.error = action.payload;
+  //   },
+  // },
+
+  // OR,
+
+  // extraReducers: (builder) => {
+  //   builder
+  //     .addCase(getCartItems.pending, (state, action) => {
+  //       state.isLoading = true;
+  //     })
+  //     .addCase(getCartItems.fulfilled, (state, action) => {
+  //       console.log(action);
+  //       state.isLoading = false;
+  //       state.cartItems = action.payload;
+  //       state.error = null;
+  //     })
+  //     .addCase(getCartItems.rejected, (state, action) => {
+  //       console.log(action);
+  //       state.isLoading = false;
+  //       state.error = action.payload;
+  //     });
+  // },
+
+  //OR,
+
+  extraReducers: (builder) => {
+    builder
+      .addMatcher(
+        (action) => getCartItemsPending.includes(action.type),
+        (state, action) => {
+          state.isLoading = true;
+        }
+      )
+      .addMatcher(
+        (action) => getCartItemsFulfilled.includes(action.type),
+        (state, action) => {
+          console.log(action);
+          state.isLoading = false;
+          state.cartItems = action.payload;
+          state.error = null;
+        }
+      )
+      .addMatcher(
+        (action) => getCartItemsRejected.includes(action.type),
+        (state, action) => {
+          console.log(action);
+          state.isLoading = false;
+          state.error = action.payload;
+        }
+      );
   },
 });
 

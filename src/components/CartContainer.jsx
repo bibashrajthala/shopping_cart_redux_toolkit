@@ -5,7 +5,19 @@ import { openModal } from "../features/modal/modalSlice";
 
 const CartContainer = () => {
   const dispatch = useDispatch();
-  const { cartItems, total, amount } = useSelector((store) => store.cart);
+  const { cartItems, total, amount, error } = useSelector(
+    (store) => store.cart
+  );
+
+  if (error) {
+    return (
+      <section className="cart">
+        <header>
+          <h4 className="empty-cart">{error}</h4>
+        </header>
+      </section>
+    );
+  }
 
   if (amount < 1) {
     return (
